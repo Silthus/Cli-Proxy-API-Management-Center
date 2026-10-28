@@ -174,6 +174,16 @@ describe('drain rate', () => {
     expect(averageDrain(samples, claudeFilter(['a', 'b']), NOW, 24 * HOUR)).toBe(6);
     expect(averageDrain([], claudeFilter(['a']), NOW, 24 * HOUR)).toBeNull();
   });
+
+  test('reports no average until an hour of history exists', () => {
+    const samples = [sample('a', 0.1, 72), sample('a', 0, 72)];
+    expect(averageDrain(samples, claudeFilter(['a']), NOW, 24 * HOUR)).toBeNull();
+  });
+
+  test('weights the average by the time each measurement covers', () => {
+    const samples = [sample('a', 3, 100), sample('a', 1, 90), sample('a', 0.5, 88)];
+    expect(averageDrain(samples, claudeFilter(['a']), NOW, 24 * HOUR)).toBe(4.8);
+  });
 });
 
 describe('forecast', () => {

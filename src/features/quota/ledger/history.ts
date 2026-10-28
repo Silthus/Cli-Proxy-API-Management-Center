@@ -169,18 +169,45 @@ export function drainRate(
   }));
 }
 
-/** Average pool drain over the trailing window, in percent per hour; null without history. */
+/**
+ * Average pool drain over the trailing window, in percent per hour: all
+ * spending divided by the time any credential was measured. Null until that
+ * time reaches an hour, so a first pair of samples does not read as zero.
+ */
 export function averageDrain(
   samples: readonly QuotaLedgerSample[],
   filter: SeriesFilter,
   nowMs: number,
   windowMs: number
 ): number | null {
-  const buckets = drainRate(samples, filter, nowMs - windowMs, nowMs, HOUR_MS).filter(
-    (point): point is { at: number; value: number } => point.value !== null
-  );
-  if (buckets.length === 0) return null;
-  return buckets.reduce((sum, point) => sum + point.value, 0) / buckets.length;
+  const fromMs = nowMs - windowMs;
+  const intervals = [...seriesOf(samples, filter).values()]
+    .flatMap(consumptions)
+    .map((interval) => clipInterval(interval, fromMs, nowMs))
+    .filter((interval): interval is Consumption => interval !== null);
+  const measuredMs = coveredMs(intervals);
+  if (measuredMs < HOUR_MS) return null;
+  const spent = intervals.reduce((sum, interval) => sum + interval.amount, 0);
+  return spent / (measuredMs / HOUR_MS);
+}
+
+function clipInterval(interval: Consumption, fromMs: number, toMs: number): Consumption | null {
+  const start = Math.max(interval.fromMs, fromMs);
+  const end = Math.min(interval.toMs, toMs);
+  if (end <= start) return null;
+  const share = (end - start) / (interval.toMs - interval.fromMs);
+  return { fromMs: start, toMs: end, amount: interval.amount * share };
+}
+
+function coveredMs(intervals: readonly Consumption[]): number {
+  let total = 0;
+  let reachedMs = -Infinity;
+  for (const { fromMs, toMs } of [...intervals].sort((a, b) => a.fromMs - b.fromMs)) {
+    const start = Math.max(fromMs, reachedMs);
+    if (toMs > start) total += toMs - start;
+    reachedMs = Math.max(reachedMs, toMs);
+  }
+  return total;
 }
 
 export interface PoolForecast {
