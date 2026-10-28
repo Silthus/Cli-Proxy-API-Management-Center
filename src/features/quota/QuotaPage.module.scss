@@ -121,8 +121,14 @@
 
 .sort {
   flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
   min-width: 148px;
   max-width: 100%;
+
+  > * {
+    min-width: 132px;
+  }
 
   button[aria-haspopup='listbox'] {
     height: 36px;

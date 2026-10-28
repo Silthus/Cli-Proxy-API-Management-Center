@@ -1,0 +1,367 @@
+/* Pool headline and its charts. The chart wears the provider accent. */
+
+.pulse {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.pool {
+  --chart-accent: var(--primary-color);
+}
+
+.pool + .pool {
+  border-top: 1px solid var(--border-color);
+}
+
+.summary {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 28px;
+  width: 100%;
+  padding: 14px 4px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+}
+
+.summaryProvider {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 190px;
+}
+
+.summaryLimit {
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+
+.summaryFigure {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.summaryValue {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.levelHigh {
+  color: var(--viz-success);
+}
+
+.levelMedium {
+  color: var(--quota-medium-color);
+}
+
+.levelLow {
+  color: var(--viz-failure);
+}
+
+.summaryCapacity,
+.summaryRate {
+  color: var(--text-secondary);
+  font-size: 17px;
+}
+
+.summaryWarning {
+  color: var(--warning-text, var(--warning-color));
+  font-size: 15px;
+}
+
+.summaryChevron {
+  margin-left: auto;
+  align-self: center;
+  color: var(--text-secondary);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0 4px 20px;
+}
+
+.viewTabs {
+  display: flex;
+  gap: 28px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.viewTab {
+  padding: 6px 0 10px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+}
+
+.viewTabActive {
+  border-bottom-color: var(--chart-accent);
+  color: var(--chart-accent);
+}
+
+.notice {
+  margin: 8px 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+
+  a {
+    color: var(--chart-accent);
+  }
+}
+
+.chartHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.legendSolid::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 10px;
+  border-radius: 50%;
+  background: var(--chart-accent);
+}
+
+.legendDashed {
+  color: var(--chart-accent);
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 14px;
+    margin-right: 8px;
+    vertical-align: middle;
+    border-top: 2px dashed var(--chart-accent);
+  }
+}
+
+.legendNote {
+  color: var(--text-secondary);
+}
+
+.rangeControl {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* ---------- chart ---------- */
+
+.chart {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-rows: 280px auto;
+}
+
+.chartYAxis {
+  position: relative;
+
+  span {
+    position: absolute;
+    right: 10px;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.chartPlot {
+  position: relative;
+  cursor: crosshair;
+  touch-action: pan-y;
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+}
+
+.chartGridLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+  pointer-events: none;
+}
+
+.chartSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.chartLine,
+.chartLineProjected {
+  fill: none;
+  stroke: var(--chart-accent);
+  stroke-width: 2px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.chartLineProjected {
+  stroke-dasharray: 6 5;
+  opacity: 0.85;
+}
+
+.chartArea {
+  fill: color-mix(in srgb, var(--chart-accent) 22%, transparent);
+}
+
+.chartAreaProjected {
+  fill: color-mix(in srgb, var(--chart-accent) 10%, transparent);
+}
+
+.chartNow {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 1px dashed var(--text-tertiary);
+  pointer-events: none;
+
+  span {
+    position: absolute;
+    top: 4px;
+    left: 8px;
+    color: var(--text-tertiary);
+    font-size: 12px;
+  }
+}
+
+.chartCrosshair {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 1px solid color-mix(in srgb, var(--chart-accent) 70%, transparent);
+  pointer-events: none;
+}
+
+.chartDot {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--bg-primary);
+  border-radius: 50%;
+  background: var(--chart-accent);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.chartTooltip {
+  position: absolute;
+  top: 8px;
+  padding: 5px 9px;
+  margin-left: 10px;
+  border-radius: 6px;
+  background: var(--floating-surface, var(--bg-secondary));
+  box-shadow: var(--floating-shadow, var(--shadow));
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.chartTooltipLeft {
+  margin-left: 0;
+  transform: translateX(calc(-100% - 10px));
+}
+
+.chartXAxis {
+  position: relative;
+  grid-column: 2;
+  height: 28px;
+
+  span {
+    position: absolute;
+    top: 10px;
+    transform: translateX(-50%);
+    color: var(--text-tertiary);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+}
+
+.chartFooter {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.footerNote {
+  color: var(--text-secondary);
+}
+
+.settingsToggle {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+}
+
+.settings {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.settingsHint {
+  flex-basis: 100%;
+  color: var(--text-tertiary);
+  font-size: 13px;
+}

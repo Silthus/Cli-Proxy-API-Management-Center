@@ -51,6 +51,17 @@ import { useDevinQuotaAutoLoad } from './providers/devin/useDevinQuotaAutoLoad';
 import { useQuotaActions } from './hooks/useQuotaActions';
 import { useQuotaBatchLoader } from './hooks/useQuotaBatchLoader';
 import { readQuotaUiState, writeQuotaUiState } from './uiState';
+import { quotaLimits } from './ledger/limits';
+import { buildPools, type CredentialLimits } from './ledger/pools';
+import {
+  readLedgerPreference,
+  writeLedgerPreference,
+  type LedgerPreferences,
+} from './ledger/preferences';
+import { ProviderSummaryCards } from './ledger/ProviderSummaryCards';
+import { QuotaLedger } from './ledger/QuotaLedger';
+import { QuotaPulse } from './ledger/QuotaPulse';
+import { useQuotaLedger } from './ledger/useQuotaLedger';
 import styles from './QuotaPage.module.scss';
 
 const TAB_IDS: string[] = ['all', ...QUOTA_TAB_ORDER];
@@ -61,6 +72,9 @@ const SKELETON_CARD_COUNT = 6;
  * identity-aware display label. Keep the filename fallback stable for memoization.
  */
 const displayNameFor = (name: string) => name;
+
+/** Ledger series key; multi-identity providers append the auth index. */
+const ledgerAuthKey = (entry: QuotaFileEntry) => getQuotaCacheKey(entry.file).replace('\0', '#');
 
 export function QuotaPage() {
   const { t } = useTranslation();
@@ -76,6 +90,10 @@ export function QuotaPage() {
   );
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [view, setView] = useState<LedgerPreferences['view']>(() =>
+    readLedgerPreference('view', 'ledger', ['ledger', 'cards'])
+  );
+  const [showEmails, setShowEmails] = useState(() => readLedgerPreference('showEmails', false));
   const searchInputRef = useRef<HTMLInputElement>(null);
   // 页头 + tabs 的入场级联（标题 → meta → 动作 → tabs，级差 70ms）
   const revealRef = useRevealGroup<HTMLDivElement>();
@@ -210,6 +228,27 @@ export function QuotaPage() {
     writeQuotaUiState({ sortMode: next as QuotaSortMode });
   }, []);
 
+  const handleViewChange = useCallback((next: string) => {
+    const value = next as LedgerPreferences['view'];
+    setView(value);
+    writeLedgerPreference('view', value);
+  }, []);
+
+  const handleToggleEmails = useCallback(() => {
+    setShowEmails((current) => {
+      writeLedgerPreference('showEmails', !current);
+      return !current;
+    });
+  }, []);
+
+  const viewOptions = useMemo(
+    () => [
+      { value: 'ledger', label: t('quota_ledger.view_ledger') },
+      { value: 'cards', label: t('quota_ledger.view_cards') },
+    ],
+    [t]
+  );
+
   const sortOptions = useMemo(
     () =>
       QUOTA_SORT_MODES.map((mode) => ({ value: mode, label: t(`quota_management.sort_${mode}`) })),
@@ -301,6 +340,56 @@ export function QuotaPage() {
 
   const canUseActions = !disableControls && !loading && filesGeneration === sessionGeneration;
 
+  /* ---------- 首次打开自动加载当前页额度 ----------
+   * The ledger is an overview: rows without quota tell nothing. Each credential
+   * is fetched once per session; later loads stay on the refresh buttons. */
+
+  const autoLoadedRef = useRef(new Set<string>());
+  useEffect(() => {
+    if (!canUseActions || batchLoading || Boolean(error)) return;
+    const pending = pageItems.filter((entry) => {
+      const key = `${sessionGeneration}:${entry.type}:${getQuotaCacheKey(entry.file)}`;
+      if (entry.file.disabled || getQuota(entry) || autoLoadedRef.current.has(key)) return false;
+      autoLoadedRef.current.add(key);
+      return true;
+    });
+    if (pending.length > 0) void loadQuota(pending);
+  }, [batchLoading, canUseActions, error, getQuota, loadQuota, pageItems, sessionGeneration]);
+
+  /* ---------- 额度账本：池、历史、燃烧率 ---------- */
+
+  const now = useNow();
+  const credentialLimits = useMemo<CredentialLimits[]>(
+    () =>
+      entries.map((entry) => ({
+        provider: entry.type,
+        auth: ledgerAuthKey(entry),
+        limits: quotaLimits(entry.type, getQuota(entry), t),
+      })),
+    [entries, getQuota, t]
+  );
+  const ledger = useQuotaLedger(credentialLimits, !disableControls);
+  const pools = useMemo(
+    () =>
+      buildPools(
+        QUOTA_TAB_ORDER.filter((type) => tab === 'all' || type === tab),
+        credentialLimits,
+        now
+      ),
+    [credentialLimits, now, tab]
+  );
+  const ledgerGroups = useMemo(() => {
+    const limitsByKey = new Map(
+      credentialLimits.map((item, index) => [entries[index], item.limits])
+    );
+    return QUOTA_TAB_ORDER.map((provider) => ({
+      provider,
+      rows: pageItems
+        .filter((entry) => entry.type === provider)
+        .map((entry) => ({ entry, quota: getQuota(entry), limits: limitsByKey.get(entry) ?? [] })),
+    })).filter((group) => group.rows.length > 0);
+  }, [credentialLimits, entries, getQuota, pageItems]);
+
   /* ---------- 首屏卡片一次性级联入场 ----------
    * 首批数据渲染后立即翻转 cardsAnimated；已挂载的卡片在挂载时捕获过自己的
    * 延迟（QuotaCard 内 useState 初始化），后续切 tab/翻页/刷新新挂载的卡片
@@ -332,6 +421,8 @@ export function QuotaPage() {
         refreshing={loading || batchLoading}
         disableControls={disableControls}
         onRefreshAll={handleRefreshAll}
+        showEmails={showEmails}
+        onToggleEmails={handleToggleEmails}
       />
 
       <section className={styles.workbench}>
@@ -345,6 +436,14 @@ export function QuotaPage() {
             onChange={handleTabChange}
           />
         </div>
+
+        <QuotaPulse
+          pools={pools}
+          samples={ledger.samples}
+          ledgerStatus={ledger.status}
+          nowMs={now}
+          resolvedTheme={resolvedTheme}
+        />
 
         <div className={styles.toolbar}>
           <div className={styles.search}>
@@ -374,6 +473,13 @@ export function QuotaPage() {
             )}
           </div>
           <div className={styles.sort}>
+            <Select
+              value={view}
+              options={viewOptions}
+              onChange={handleViewChange}
+              ariaLabel={t('quota_ledger.view_label')}
+              size="sm"
+            />
             <Select
               value={sortMode}
               options={sortOptions}
@@ -424,6 +530,20 @@ export function QuotaPage() {
               )
             }
           />
+        ) : view === 'ledger' ? (
+          <>
+            <ProviderSummaryCards pools={pools} nowMs={now} resolvedTheme={resolvedTheme} />
+            <QuotaLedger
+              groups={ledgerGroups}
+              nowMs={now}
+              showEmails={showEmails}
+              canUseActions={canUseActions}
+              resettingName={resettingQuotaName}
+              resolvedTheme={resolvedTheme}
+              onRefresh={(entry) => void refreshQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
+              onReset={(entry) => resetQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
+            />
+          </>
         ) : (
           <div className={styles.grid}>
             {pageItems.map((entry, index) => (
@@ -471,12 +591,14 @@ export function QuotaPage() {
         )}
 
         {/* 时间线只比较当前页凭证，避免大量凭证一次性生成无界泳道。 */}
-        <QuotaTimeline
-          entries={pageItems}
-          quotaFor={getQuota}
-          displayNameFor={displayNameFor}
-          resolvedTheme={resolvedTheme}
-        />
+        {view === 'cards' && (
+          <QuotaTimeline
+            entries={pageItems}
+            quotaFor={getQuota}
+            displayNameFor={displayNameFor}
+            resolvedTheme={resolvedTheme}
+          />
+        )}
       </section>
     </div>
   );
