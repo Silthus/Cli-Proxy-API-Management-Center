@@ -326,8 +326,19 @@
 .actions {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 6px;
+}
+
+.resets {
+  color: var(--text-secondary);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 4px;
 }
 
 .action {

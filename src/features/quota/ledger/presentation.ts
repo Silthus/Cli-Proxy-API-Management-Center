@@ -48,3 +48,10 @@ export function lastSeenMs(file: AuthFileItem): number | null {
   }
   return latest;
 }
+
+/** Codex reports how many limit resets the account has left; other providers report none. */
+export function resetsRemaining(quota: unknown): number | null {
+  const count = (quota as { rateLimitResetCreditsAvailableCount?: unknown } | undefined)
+    ?.rateLimitResetCreditsAvailableCount;
+  return typeof count === 'number' ? count : null;
+}

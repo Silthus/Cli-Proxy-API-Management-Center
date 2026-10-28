@@ -1,7 +1,7 @@
 /**
  * The pool headline: how much is left, how fast it goes, and where it is
- * heading. Each pool line expands into a remaining-quota forecast and a drain
- * rate history.
+ * heading. It follows the provider tab, and on "All" it shows the largest
+ * pool. It expands into a remaining-quota forecast and a drain rate history.
  */
 
 import { useMemo, useState, type CSSProperties } from 'react';
@@ -13,9 +13,10 @@ import { DAY_MS, HOUR_MS, MINUTE_MS } from '@/utils/time/durations';
 import { capacityTicks, formatWeekdayClock, rateCeiling, rateTicks, timeTicks } from './chartScale';
 import {
   averageDrain,
-  drainRate,
   forecastPool,
   poolHistory,
+  rollingDrain,
+  windowPace,
   type QuotaLedgerSample,
   type SeriesFilter,
 } from './history';
@@ -30,16 +31,16 @@ const HORIZONS = { '1': DAY_MS, '3': 3 * DAY_MS, '7': 7 * DAY_MS } as const;
 type HorizonDays = keyof typeof HORIZONS;
 const DRAIN_BASES = { '6h': 6 * HOUR_MS, '24h': DAY_MS, '7d': 7 * DAY_MS } as const;
 type DrainBasis = keyof typeof DRAIN_BASES;
-/** Drain chart range → bucket size, so every range draws a readable number of points. */
+/** Drain chart range → trailing average and sampling step, about 96 points each. */
 const DRAIN_RANGES = {
-  '24h': { span: DAY_MS, bucket: HOUR_MS },
-  '3d': { span: 3 * DAY_MS, bucket: 3 * HOUR_MS },
-  '7d': { span: 7 * DAY_MS, bucket: 6 * HOUR_MS },
+  '24h': { span: DAY_MS, average: HOUR_MS, step: 15 * MINUTE_MS },
+  '3d': { span: 3 * DAY_MS, average: 3 * HOUR_MS, step: 45 * MINUTE_MS },
+  '7d': { span: 7 * DAY_MS, average: 6 * HOUR_MS, step: 105 * MINUTE_MS },
 } as const;
 type DrainRange = keyof typeof DRAIN_RANGES;
 
 /** Share of the forecast horizon shown as measured history before "now". */
-const HISTORY_SHARE = 0.25;
+const HISTORY_SHARE = 1 / 7;
 const FORECAST_STEP_MS = 15 * MINUTE_MS;
 const HISTORY_POINTS = 120;
 
@@ -51,10 +52,8 @@ const CHART_ACCENTS: Partial<Record<string, string>> = {
 
 const PLUGIN_URL = 'https://github.com/Silthus/cliproxy-quota-ledger';
 
-const levelClass = (remaining: number, capacity: number) => {
-  const ratio = capacity > 0 ? remaining / capacity : 0;
-  return ratio >= 0.7 ? styles.levelHigh : ratio >= 0.3 ? styles.levelMedium : styles.levelLow;
-};
+const largestPool = (pools: QuotaPool[]) =>
+  pools.reduce((largest, pool) => (pool.credentialCount > largest.credentialCount ? pool : largest));
 
 const filterFor = (provider: string, limit: PoolLimit): SeriesFilter => ({
   provider,
@@ -83,6 +82,7 @@ export function QuotaPulse({
   );
   const measured = pools.filter((pool) => pool.headline !== null);
   if (measured.length === 0) return null;
+  const pool = largestPool(measured);
 
   const toggle = (provider: string) => {
     const next = expanded === provider ? '' : provider;
@@ -96,22 +96,20 @@ export function QuotaPulse({
 
   return (
     <section className={styles.pulse}>
-      {measured.map((pool) => (
-        <PoolPulse
-          key={pool.provider}
-          pool={pool}
-          headline={pool.headline!}
-          showProvider={measured.length > 1}
-          samples={samples}
-          ledgerStatus={ledgerStatus}
-          nowMs={nowMs}
-          resolvedTheme={resolvedTheme}
-          expanded={expanded === pool.provider}
-          onToggle={() => toggle(pool.provider)}
-          basis={basis}
-          onBasisChange={changeBasis}
-        />
-      ))}
+      <PoolPulse
+        key={pool.provider}
+        pool={pool}
+        headline={pool.headline!}
+        showProvider={measured.length > 1}
+        samples={samples}
+        ledgerStatus={ledgerStatus}
+        nowMs={nowMs}
+        resolvedTheme={resolvedTheme}
+        expanded={expanded === pool.provider}
+        onToggle={() => toggle(pool.provider)}
+        basis={basis}
+        onBasisChange={changeBasis}
+      />
     </section>
   );
 }
@@ -135,10 +133,12 @@ function PoolPulse(props: PoolPulseProps) {
   const { t, i18n } = useTranslation();
   const [view, setView] = useState<'remaining' | 'drain'>('remaining');
   const filter = useMemo(() => filterFor(pool.provider, headline), [pool.provider, headline]);
-  const drain = useMemo(
+  const measuredDrain = useMemo(
     () => averageDrain(samples, filter, nowMs, DRAIN_BASES[basis]),
     [samples, filter, nowMs, basis]
   );
+  const pace = useMemo(() => windowPace(headline.members, nowMs), [headline.members, nowMs]);
+  const drain = measuredDrain ?? pace;
   const forecast = useMemo(
     () =>
       drain === null
@@ -170,9 +170,7 @@ function PoolPulse(props: PoolPulseProps) {
           </span>
         )}
         <span className={styles.summaryFigure}>
-          <span
-            className={`${styles.summaryValue} ${levelClass(headline.remaining, headline.capacity)}`}
-          >
+          <span className={styles.summaryValue}>
             {Math.round(headline.remaining)}%
           </span>
           <span className={styles.summaryCapacity}>
@@ -226,6 +224,7 @@ function PoolPulse(props: PoolPulseProps) {
               filter={filter}
               nowMs={nowMs}
               forecast={forecast}
+              fromPace={measuredDrain === null && pace !== null}
               basis={basis}
               onBasisChange={props.onBasisChange}
             />
@@ -244,6 +243,7 @@ interface RemainingViewProps {
   filter: SeriesFilter;
   nowMs: number;
   forecast: ReturnType<typeof forecastPool> | null;
+  fromPace: boolean;
   basis: DrainBasis;
   onBasisChange: (basis: DrainBasis) => void;
 }
@@ -254,6 +254,7 @@ function RemainingView({
   filter,
   nowMs,
   forecast,
+  fromPace,
   basis,
   onBasisChange,
 }: RemainingViewProps) {
@@ -355,7 +356,10 @@ function RemainingView({
             }))}
             onChange={(value) => onBasisChange(value as DrainBasis)}
           />
-          <span className={styles.settingsHint}>{t('quota_ledger.forecast_model')}</span>
+          <span className={styles.settingsHint}>
+            {t('quota_ledger.forecast_model')}
+            {fromPace && ` ${t('quota_ledger.forecast_from_pace')}`}
+          </span>
         </div>
       )}
     </>
@@ -374,11 +378,11 @@ function DrainView({ samples, filter, nowMs }: DrainViewProps) {
   const [range, setRange] = useState<DrainRange>(() =>
     readLedgerPreference('drainRange', '24h', ['24h', '3d', '7d'])
   );
-  const { span, bucket } = DRAIN_RANGES[range];
+  const { span, average, step } = DRAIN_RANGES[range];
   const fromMs = nowMs - span;
   const points = useMemo(
-    () => drainRate(samples, filter, fromMs, nowMs, bucket),
-    [samples, filter, fromMs, nowMs, bucket]
+    () => rollingDrain(samples, filter, fromMs, nowMs, average, step),
+    [samples, filter, fromMs, nowMs, average, step]
   );
   const peak = points.reduce((max, point) => Math.max(max, point.value ?? 0), 0);
   const ceiling = rateCeiling(peak);
@@ -390,7 +394,7 @@ function DrainView({ samples, filter, nowMs }: DrainViewProps) {
         <div className={styles.legend}>
           <span className={styles.legendSolid}>{t('quota_ledger.legend_rate')}</span>
           <span className={styles.legendNote}>
-            {t('quota_ledger.bucket_average', { count: bucket / HOUR_MS })}
+            {t('quota_ledger.bucket_average', { count: average / HOUR_MS })}
           </span>
         </div>
         <label className={styles.rangeControl}>
@@ -425,7 +429,7 @@ function DrainView({ samples, filter, nowMs }: DrainViewProps) {
           })
         }
       />
-      <div className={styles.chartFooter}>
+      <div className={`${styles.chartFooter} ${styles.chartFooterStart}`}>
         <span>
           {hasData
             ? t('quota_ledger.peak', { value: peak.toFixed(1) })

@@ -51,9 +51,15 @@ export const capacityTicks = (capacity: number) =>
     return { value, label: `${value}%` };
   });
 
-/** A ceiling for rates whose quarter ticks are whole numbers, never below 4. */
+const NICE_STEPS = [1, 2, 5];
+
+/** A ceiling of four round steps (1, 2, 5 × 10ⁿ) with headroom above the peak, never below 4. */
 export function rateCeiling(peak: number): number {
-  return Math.max(4, Math.ceil(peak / 4) * 4);
+  const minimumStep = (peak * 1.1) / 4;
+  for (let magnitude = 1; ; magnitude *= 10) {
+    const step = NICE_STEPS.map((base) => base * magnitude).find((value) => value >= minimumStep);
+    if (step !== undefined) return step * 4;
+  }
 }
 
 export const rateTicks = (ceiling: number) =>

@@ -133,43 +133,6 @@ function consumptions(list: readonly QuotaLedgerSample[]): Consumption[] {
 }
 
 /**
- * Pool drain in percent per hour, one point per bucket. Each interval's
- * spending is spread over the buckets it overlaps; a bucket that no interval
- * touches is a gap.
- */
-export function drainRate(
-  samples: readonly QuotaLedgerSample[],
-  filter: SeriesFilter,
-  fromMs: number,
-  toMs: number,
-  bucketMs: number
-): ChartPoint[] {
-  const bucketCount = Math.max(1, Math.ceil((toMs - fromMs) / bucketMs));
-  const spent = new Array<number>(bucketCount).fill(0);
-  const covered = new Array<boolean>(bucketCount).fill(false);
-
-  for (const list of seriesOf(samples, filter).values()) {
-    for (const interval of consumptions(list)) {
-      const duration = interval.toMs - interval.fromMs;
-      for (let index = 0; index < bucketCount; index += 1) {
-        const start = fromMs + index * bucketMs;
-        const overlap =
-          Math.min(interval.toMs, start + bucketMs) - Math.max(interval.fromMs, start);
-        if (overlap <= 0) continue;
-        covered[index] = true;
-        spent[index] += duration > 0 ? (interval.amount * overlap) / duration : interval.amount;
-      }
-    }
-  }
-
-  const bucketHours = bucketMs / HOUR_MS;
-  return spent.map((amount, index) => ({
-    at: fromMs + index * bucketMs + bucketMs / 2,
-    value: covered[index] ? amount / bucketHours : null,
-  }));
-}
-
-/**
  * Average pool drain over the trailing window, in percent per hour: all
  * spending divided by the time any credential was measured. Null until that
  * time reaches an hour, so a first pair of samples does not read as zero.
@@ -180,14 +143,61 @@ export function averageDrain(
   nowMs: number,
   windowMs: number
 ): number | null {
-  const fromMs = nowMs - windowMs;
-  const intervals = [...seriesOf(samples, filter).values()]
-    .flatMap(consumptions)
-    .map((interval) => clipInterval(interval, fromMs, nowMs))
+  return drainBetween(intervalsOf(samples, filter), nowMs - windowMs, nowMs, HOUR_MS);
+}
+
+/**
+ * Pool drain as a trailing average sampled every step, so the line follows
+ * the pace of work instead of jumping between fixed buckets.
+ */
+export function rollingDrain(
+  samples: readonly QuotaLedgerSample[],
+  filter: SeriesFilter,
+  fromMs: number,
+  toMs: number,
+  windowMs: number,
+  stepMs: number
+): ChartPoint[] {
+  const intervals = intervalsOf(samples, filter);
+  const points: ChartPoint[] = [];
+  for (let at = fromMs; at <= toMs; at += stepMs) {
+    points.push({ at, value: drainBetween(intervals, at - windowMs, at, windowMs / 2) });
+  }
+  return points;
+}
+
+/**
+ * Pool drain from the current windows alone: how fast each credential used
+ * its window so far, summed. It needs no history, so a fresh install can
+ * forecast before the ledger has measured anything.
+ */
+export function windowPace(members: readonly PoolMember[], nowMs: number): number | null {
+  let pace: number | null = null;
+  for (const member of members) {
+    if (member.resetAtMs === null || member.resetAtMs <= nowMs) continue;
+    const periodHours = member.periodHours ?? DEFAULT_PERIOD_HOURS;
+    const elapsedHours = periodHours - (member.resetAtMs - nowMs) / HOUR_MS;
+    if (elapsedHours < 1) continue;
+    pace = (pace ?? 0) + (100 - member.remaining) / elapsedHours;
+  }
+  return pace;
+}
+
+const intervalsOf = (samples: readonly QuotaLedgerSample[], filter: SeriesFilter) =>
+  [...seriesOf(samples, filter).values()].flatMap(consumptions);
+
+function drainBetween(
+  intervals: readonly Consumption[],
+  fromMs: number,
+  toMs: number,
+  minMeasuredMs: number
+): number | null {
+  const clipped = intervals
+    .map((interval) => clipInterval(interval, fromMs, toMs))
     .filter((interval): interval is Consumption => interval !== null);
-  const measuredMs = coveredMs(intervals);
-  if (measuredMs < HOUR_MS) return null;
-  const spent = intervals.reduce((sum, interval) => sum + interval.amount, 0);
+  const measuredMs = coveredMs(clipped);
+  if (measuredMs === 0 || measuredMs < minMeasuredMs) return null;
+  const spent = clipped.reduce((sum, interval) => sum + interval.amount, 0);
   return spent / (measuredMs / HOUR_MS);
 }
 

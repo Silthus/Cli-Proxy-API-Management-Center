@@ -2374,6 +2374,8 @@
     "not_loaded": "Not loaded",
     "no_reset_pending": "No reset pending",
     "reset_limits": "Reset limits",
-    "refresh_quota": "Refresh quota"
+    "refresh_quota": "Refresh quota",
+    "resets_remaining": "Resets remaining: {{value}}",
+    "forecast_from_pace": "Until the ledger has an hour of history, the forecast uses each window's pace so far."
   }
 }

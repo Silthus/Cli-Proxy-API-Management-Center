@@ -2374,6 +2374,8 @@
     "not_loaded": "불러오지 않음",
     "no_reset_pending": "예정된 초기화 없음",
     "reset_limits": "한도 초기화",
-    "refresh_quota": "할당량 새로고침"
+    "refresh_quota": "할당량 새로고침",
+    "resets_remaining": "남은 초기화 횟수: {{value}}",
+    "forecast_from_pace": "기록이 한 시간 쌓이기 전까지는 각 창의 지금까지 소진 속도로 예측합니다."
   }
 }

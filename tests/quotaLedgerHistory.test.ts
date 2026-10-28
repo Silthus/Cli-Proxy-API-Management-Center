@@ -2,11 +2,13 @@ import { describe, expect, test } from 'bun:test';
 import type { TFunction } from 'i18next';
 import {
   averageDrain,
-  drainRate,
   forecastPool,
   poolHistory,
+  rollingDrain,
+  windowPace,
   type QuotaLedgerSample,
 } from '@/features/quota/ledger/history';
+import { rateCeiling } from '@/features/quota/ledger/chartScale';
 import { backInMs, headlineLimitId, quotaLimits } from '@/features/quota/ledger/limits';
 import { buildPools } from '@/features/quota/ledger/pools';
 
@@ -153,15 +155,15 @@ describe('pool history', () => {
 });
 
 describe('drain rate', () => {
-  test('spreads spending over the hours it happened in and skips resets', () => {
+  test('measures spending per hour of history and skips resets', () => {
     const samples = [
       sample('a', 2, 90),
       sample('a', 1, 80),
       sample('a', 0.5, 100),
       sample('a', 0, 97),
     ];
-    const rates = drainRate(samples, claudeFilter(['a']), NOW - 2 * HOUR, NOW, HOUR);
-    expect(rates.map((point) => point.value)).toEqual([10, 3]);
+    const rates = rollingDrain(samples, claudeFilter(['a']), NOW - HOUR, NOW, HOUR, HOUR);
+    expect(rates.map((point) => point.value)).toEqual([10, 6]);
   });
 
   test('averages only the hours that have history', () => {
@@ -183,6 +185,41 @@ describe('drain rate', () => {
   test('weights the average by the time each measurement covers', () => {
     const samples = [sample('a', 3, 100), sample('a', 1, 90), sample('a', 0.5, 88)];
     expect(averageDrain(samples, claudeFilter(['a']), NOW, 24 * HOUR)).toBe(4.8);
+  });
+});
+
+describe('rolling drain', () => {
+  test('averages the trailing window at every step and leaves unmeasured steps empty', () => {
+    const samples = [sample('a', 3, 100), sample('a', 2, 90), sample('a', 1, 88), sample('a', 0, 88)];
+    const points = rollingDrain(samples, claudeFilter(['a']), NOW - 3 * HOUR, NOW, HOUR, HOUR);
+    expect(points.map((point) => point.value)).toEqual([null, 10, 2, 0]);
+  });
+});
+
+describe('window pace', () => {
+  test('sums how fast each credential used its current window so far', () => {
+    const pace = windowPace(
+      [
+        { auth: 'a', remaining: 72, resetAtMs: NOW + 48 * HOUR, periodHours: 168 },
+        { auth: 'b', remaining: 0, resetAtMs: NOW + 8 * HOUR, periodHours: 168 },
+        { auth: 'c', remaining: 100, resetAtMs: null, periodHours: 168 },
+      ],
+      NOW
+    );
+    expect(pace).toBeCloseTo(28 / 120 + 100 / 160, 6);
+  });
+
+  test('has no pace before any window has run for an hour', () => {
+    const fresh = { auth: 'a', remaining: 99, resetAtMs: NOW + 167.5 * HOUR, periodHours: 168 };
+    expect(windowPace([fresh], NOW)).toBeNull();
+  });
+});
+
+describe('rate axis', () => {
+  test('rounds the ceiling up to four even steps above the peak', () => {
+    expect(rateCeiling(11)).toBe(20);
+    expect(rateCeiling(3)).toBe(4);
+    expect(rateCeiling(0)).toBe(4);
   });
 });
 

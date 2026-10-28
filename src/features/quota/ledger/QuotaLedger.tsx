@@ -12,8 +12,8 @@ import { getQuotaCacheKey } from '@/utils/quota/identity';
 import type { QuotaFileEntry } from '../logic';
 import { QUOTA_ADAPTERS, type QuotaCardState } from '../providers';
 import type { QuotaProviderType } from '../providers/types';
-import { backInMs, type QuotaLimit } from './limits';
-import { credentialLabel, formatDuration, lastSeenMs } from './presentation';
+import { backInMs, headlineLimitId, type QuotaLimit } from './limits';
+import { credentialLabel, formatDuration, lastSeenMs, resetsRemaining } from './presentation';
 import styles from './QuotaLedger.module.scss';
 
 export interface LedgerEntry {
@@ -32,6 +32,11 @@ export interface QuotaLedgerProps {
   onRefresh: (entry: QuotaFileEntry) => void;
   onReset: (entry: QuotaFileEntry) => void;
 }
+
+const headlineFirst = (provider: QuotaProviderType, limits: QuotaLimit[]) => {
+  const headline = headlineLimitId(provider, limits);
+  return [...limits].sort((a, b) => Number(b.id === headline) - Number(a.id === headline));
+};
 
 const levelClass = (remaining: number | null) =>
   remaining === null
@@ -67,7 +72,8 @@ export function QuotaLedger(props: QuotaLedgerProps) {
 
 function LedgerRow({ row, ...props }: QuotaLedgerProps & { row: LedgerEntry }) {
   const { t, i18n } = useTranslation();
-  const { entry, quota, limits } = row;
+  const { entry, quota } = row;
+  const limits = headlineFirst(entry.type, row.limits);
   const { file } = entry;
   const locale = i18n.resolvedLanguage;
   const adapter = QUOTA_ADAPTERS[entry.type];
@@ -76,6 +82,7 @@ function LedgerRow({ row, ...props }: QuotaLedgerProps & { row: LedgerEntry }) {
   const seenAt = lastSeenMs(file);
   const cacheKey = getQuotaCacheKey(file);
   const canRefresh = props.canUseActions && !file.disabled && quota?.status !== 'loading';
+  const resets = resetsRemaining(quota);
   const canReset =
     Boolean(adapter.resetQuota) &&
     props.canUseActions &&
@@ -137,7 +144,10 @@ function LedgerRow({ row, ...props }: QuotaLedgerProps & { row: LedgerEntry }) {
       </div>
 
       <div className={styles.actions}>
-        {adapter.resetQuota && (
+        <span className={styles.resets}>
+          {t('quota_ledger.resets_remaining', { value: resets ?? '--' })}
+        </span>
+        <div className={styles.actionButtons}>
           <button
             type="button"
             className={styles.action}
@@ -147,19 +157,19 @@ function LedgerRow({ row, ...props }: QuotaLedgerProps & { row: LedgerEntry }) {
             <IconRefreshCw size={13} />
             {t('quota_ledger.reset_limits')}
           </button>
-        )}
-        <button
-          type="button"
-          className={styles.action}
-          disabled={!canRefresh}
-          onClick={() => props.onRefresh(entry)}
-        >
-          <IconRefreshCw
-            size={13}
-            className={quota?.status === 'loading' ? styles.spinning : undefined}
-          />
-          {t('quota_ledger.refresh_quota')}
-        </button>
+          <button
+            type="button"
+            className={styles.action}
+            disabled={!canRefresh}
+            onClick={() => props.onRefresh(entry)}
+          >
+            <IconRefreshCw
+              size={13}
+              className={quota?.status === 'loading' ? styles.spinning : undefined}
+            />
+            {t('quota_ledger.refresh_quota')}
+          </button>
+        </div>
       </div>
     </article>
   );

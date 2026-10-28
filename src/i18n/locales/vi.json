@@ -2380,6 +2380,8 @@
     "not_loaded": "Chưa tải",
     "no_reset_pending": "Không có lần đặt lại",
     "reset_limits": "Đặt lại hạn mức",
-    "refresh_quota": "Làm mới hạn mức"
+    "refresh_quota": "Làm mới hạn mức",
+    "resets_remaining": "Lượt đặt lại còn lại: {{value}}",
+    "forecast_from_pace": "Khi sổ chưa có một giờ lịch sử, dự báo dùng tốc độ tiêu hao của từng cửa sổ từ đầu đến nay."
   }
 }

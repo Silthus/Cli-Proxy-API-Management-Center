@@ -54,22 +54,11 @@
 }
 
 .summaryValue {
+  color: var(--chart-accent);
   font-size: 34px;
   font-weight: 700;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
-}
-
-.levelHigh {
-  color: var(--viz-success);
-}
-
-.levelMedium {
-  color: var(--quota-medium-color);
-}
-
-.levelLow {
-  color: var(--viz-failure);
 }
 
 .summaryCapacity,
@@ -332,6 +321,11 @@
   flex-wrap: wrap;
   color: var(--text-primary);
   font-size: 14px;
+}
+
+.chartFooterStart {
+  justify-content: flex-start;
+  gap: 24px;
 }
 
 .footerNote {
