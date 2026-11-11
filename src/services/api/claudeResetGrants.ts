@@ -36,9 +36,15 @@ export type AnthropicResetUpstreamResult = (typeof ANTHROPIC_RESET_RESULTS)[numb
 export type AnthropicResetSettledCode =
   AnthropicResetUpstreamResult | 'rate_limited' | 'auth_error';
 
+/** What a grant restores: the weekly limit, the Fable weekly limit, or something else. */
+export type AnthropicResetTarget = 'weekly' | 'fable' | 'other';
+
 export interface AnthropicResetGrant {
   id: string;
   label: string;
+  target: AnthropicResetTarget;
+  /** Upstream's machine-readable refusal, such as `blocked_seven_day`, when not usable. */
+  unavailableReason: string | null;
   resetsTotal: number;
   resetsLeft: number;
   startsAt: string | null;
@@ -143,6 +149,22 @@ function parsePercentUsed(value: unknown): Partial<Record<AnthropicResetWindow, 
   return out;
 }
 
+const UNAVAILABLE_REASON_RE = /^[a-z0-9_]{1,40}$/;
+
+/**
+ * A grant that clears `seven_day` restores the weekly limit. The Fable launch grants
+ * clear only `seven_day_overage_included` and name Fable in their id or label.
+ */
+export function resetGrantTarget(
+  id: string,
+  label: string,
+  clears: readonly AnthropicResetWindow[]
+): AnthropicResetTarget {
+  if (clears.includes('seven_day')) return 'weekly';
+  if (/fable/i.test(id) || /fable/i.test(label)) return 'fable';
+  return 'other';
+}
+
 function parseGrant(value: unknown): AnthropicResetGrant | null {
   if (!isRecord(value)) return null;
   const { id, resets_total: total, resets_left: left } = value;
@@ -165,9 +187,14 @@ function parseGrant(value: unknown): AnthropicResetGrant | null {
     useRequiresLimit === undefined
   )
     return null;
+  const label = safeLabel(value.label);
+  const reason = value.unavailable_reason;
   return {
     id,
-    label: safeLabel(value.label),
+    label,
+    target: resetGrantTarget(id, label, clears),
+    unavailableReason:
+      typeof reason === 'string' && UNAVAILABLE_REASON_RE.test(reason) ? reason : null,
     resetsTotal: total,
     resetsLeft: left,
     startsAt,

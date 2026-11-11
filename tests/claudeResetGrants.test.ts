@@ -670,18 +670,6 @@ test('card selection prefers usable recommendation and has deterministic fallbac
   }
 });
 
-test('Claude card uses Codex count and action styles and shared confirmation, not a grant dialog', async () => {
-  const card = await Bun.file('src/features/quota/components/QuotaCard.tsx').text();
-  const hook = await Bun.file('src/features/quota/providers/claude/ClaudeResetGrants.tsx').text();
-  expect(card).toContain('quotaClasses.codexPlanValue}>{claudeReset.count');
-  expect(card).toContain('disabled={claudeReset.blocked}');
-  expect(card).toContain('onClick={claudeReset.confirm}');
-  expect(hook).toContain('showConfirmation({');
-  expect(hook).toContain("pending ? 'claude_reset.retry_confirm'");
-  expect(hook).not.toContain('<Modal');
-  expect(hook).not.toContain('status.grants.map');
-});
-
 test('cooldown clear failures reuse existing messages without new locale keys', async () => {
   const hook = await Bun.file('src/features/quota/providers/claude/ClaudeResetGrants.tsx').text();
   expect(hook).toContain("answer.code === 'cooldown_clear_failed'");

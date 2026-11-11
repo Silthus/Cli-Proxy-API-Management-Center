@@ -279,6 +279,24 @@
   }
 }
 
+.actionPillArmed,
+.actionPillArmed:hover:not(:disabled) {
+  border-color: var(--danger-color);
+  background: color-mix(in srgb, var(--danger-color) 14%, transparent);
+  color: var(--danger-color);
+}
+
+.resetArmedNotice {
+  margin-top: 8px;
+  border: 1px solid color-mix(in srgb, var(--danger-color) 45%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--danger-color) 8%, transparent);
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
 .spinning {
   animation: quota-card-spin 0.8s linear infinite;
 }

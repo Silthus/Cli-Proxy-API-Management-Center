@@ -16,6 +16,8 @@ const expiry = Date.now() + 11 * 86400_000;
 const grant = (overrides: Partial<AnthropicResetGrant> = {}): AnthropicResetGrant => ({
   id: 'launch',
   label: 'Launch',
+  target: 'other',
+  unavailableReason: null,
   resetsTotal: 3,
   resetsLeft: 2,
   startsAt: null,

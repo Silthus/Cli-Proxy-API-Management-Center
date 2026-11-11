@@ -20,6 +20,7 @@ import { QUOTA_ADAPTERS, type QuotaCardState } from '../providers';
 import { isQuotaRefreshDisabled, type QuotaFileEntry } from '../logic';
 import { useClaudeResetGrants } from '../providers/claude/ClaudeResetGrants';
 import { ClaudeResetGrantDetails } from '../providers/claude/ClaudeResetGrantDetails';
+import { ClaudeResetArmedNotice, ClaudeResetButtons } from '../providers/claude/ClaudeResetActions';
 import { hasClaudeUsageData } from '../providers/claude/data';
 import bodyStyles from './QuotaBody.module.scss';
 import styles from './QuotaCard.module.scss';
@@ -97,6 +98,11 @@ export function QuotaCard(props: QuotaCardProps) {
   const claudeAfterPlan = showClaudeReset ? (
     <>
       <ClaudeResetGrantDetails grants={claudeReset.grants} classes={quotaClasses} />
+      <ClaudeResetArmedNotice
+        actions={claudeReset.actions}
+        name={displayName}
+        className={styles.resetArmedNotice}
+      />
       {claudeReset.message && (
         <div role="status" className={quotaClasses.codexResetCreditsError}>
           {t(`claude_reset.${claudeReset.message}`)}
@@ -189,16 +195,14 @@ export function QuotaCard(props: QuotaCardProps) {
       {status !== 'idle' && (
         <footer className={styles.actionRow}>
           {entry.type === 'claude' && (
-            <button
-              type="button"
-              className={styles.actionPill}
-              disabled={claudeReset.blocked}
-              onClick={claudeReset.confirm}
-              title={t(`claude_reset.${claudeReset.buttonLabel}`)}
-            >
-              <IconRefreshCw size={13} className={claudeReset.busy ? styles.spinning : undefined} />
-              {t(`claude_reset.${claudeReset.buttonLabel}`)}
-            </button>
+            <ClaudeResetButtons
+              actions={claudeReset.actions}
+              busy={claudeReset.busy}
+              onPress={claudeReset.press}
+              buttonClassName={styles.actionPill}
+              armedClassName={styles.actionPillArmed}
+              spinningClassName={styles.spinning}
+            />
           )}
           {showReset && (
             <button
