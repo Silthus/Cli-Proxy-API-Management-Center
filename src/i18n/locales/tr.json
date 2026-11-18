@@ -2362,6 +2362,7 @@
     }
   },
   "claude_reset": {
+    "split": "Weekly {{weekly}} · Fable {{fable}}",
     "expiry_title": "Elle Sıfırlama Bitişi ({{timezone}})",
     "grant_number": "Hak {{index}}",
     "expiry_unknown": "Bitiş Bilinmiyor",

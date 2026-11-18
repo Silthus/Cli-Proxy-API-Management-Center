@@ -2388,6 +2388,7 @@
     }
   },
   "claude_reset": {
+    "split": "每週 {{weekly}} · Fable {{fable}}",
     "expiry_title": "主動重置過期時間（{{timezone}}）",
     "grant_number": "第 {{index}} 批",
     "expiry_unknown": "到期時間未知",

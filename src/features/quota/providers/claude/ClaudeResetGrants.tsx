@@ -23,6 +23,7 @@ import {
   RESET_ARM_WINDOW_MS,
   RESET_TARGETS,
   resetPercentUsed,
+  resetsLeft,
   type ClaudeResetAction,
 } from './resetTargets';
 import { readResetGrantsForCard, scheduleResetGrantRead } from './resetGrantReads';
@@ -110,11 +111,7 @@ export function useClaudeResetGrants(
     return {
       target,
       grantId: grant?.id,
-      left: status
-        ? status.grants
-            .filter((item) => item.target === target)
-            .reduce((sum, item) => sum + item.resetsLeft, 0)
-        : null,
+      left: resetsLeft(status, target),
       percentUsed: grant ? resetPercentUsed(grant) : undefined,
       blocked: unavailable || !grant,
       reason: unavailable && !reason ? null : reason,
@@ -182,7 +179,10 @@ export function useClaudeResetGrants(
   };
 
   return {
-    count: status?.grants.reduce((sum, grant) => sum + grant.resetsLeft, 0) ?? null,
+    /** Weekly and Fable resets left, or null before the first read. */
+    counts: status
+      ? { weekly: resetsLeft(status, 'weekly'), fable: resetsLeft(status, 'fable') }
+      : null,
     grants: status?.grants ?? [],
     busy,
     actions,

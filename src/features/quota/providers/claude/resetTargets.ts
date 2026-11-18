@@ -1,4 +1,8 @@
-import type { AnthropicResetGrant, AnthropicResetTarget } from '@/services/api/claudeResetGrants';
+import type {
+  AnthropicResetGrant,
+  AnthropicResetGrantStatus,
+  AnthropicResetTarget,
+} from '@/services/api/claudeResetGrants';
 
 /** The reset buttons a Claude card shows, in footer order. */
 export const RESET_TARGETS = ['weekly', 'fable'] as const satisfies readonly AnthropicResetTarget[];
@@ -46,4 +50,13 @@ export function resetReasonKey(reason: string) {
   ].includes(reason)
     ? `claude_reset.reason_${reason}`
     : 'claude_reset.reason_other';
+}
+
+/** Resets of one target left across its grants, or null before the first read. */
+export function resetsLeft(status: AnthropicResetGrantStatus | null, target: AnthropicResetTarget) {
+  return status
+    ? status.grants
+        .filter((grant) => grant.target === target)
+        .reduce((sum, grant) => sum + grant.resetsLeft, 0)
+    : null;
 }

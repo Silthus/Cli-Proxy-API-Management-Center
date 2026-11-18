@@ -2362,6 +2362,7 @@
     }
   },
   "claude_reset": {
+    "split": "Weekly {{weekly}} · Fable {{fable}}",
     "expiry_title": "Manual reset expiry ({{timezone}})",
     "grant_number": "Grant {{index}}",
     "expiry_unknown": "Expiry unknown",

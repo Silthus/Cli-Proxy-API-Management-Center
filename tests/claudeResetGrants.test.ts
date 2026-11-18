@@ -1,4 +1,5 @@
 import { selectResetGrant } from '../src/features/quota/providers/claude/selectResetGrant';
+import { resetsLeft } from '../src/features/quota/providers/claude/resetTargets';
 
 import { afterEach, describe, expect, spyOn, test } from 'bun:test';
 import { apiClient } from '../src/services/api/client';
@@ -698,4 +699,50 @@ test('account reads map upstream 429 to a sanitized typed rate-limit failure', a
     });
   }
   expect(calls).toBe(2); // Neither read retries.
+});
+
+describe('Claude resets left per target', () => {
+  // Shape of Anthropic's November 2026 answer: the weekly reset spent, three Fable grants left.
+  const live = parseAnthropicResetGrantStatus({
+    eligible: true,
+    at_limit: true,
+    grants: [
+      {
+        id: 'full-reset-2611',
+        resets_total: 1,
+        resets_left: 0,
+        clears: ['five_hour', 'seven_day', 'seven_day_overage_included'],
+        type: 'full',
+      },
+      {
+        id: 'launch-2610-fable',
+        resets_total: 1,
+        resets_left: 1,
+        clears: ['five_hour', 'seven_day_overage_included'],
+        gives_back_weekly: true,
+      },
+      {
+        id: 'launch-2610-fable-6mo',
+        resets_total: 1,
+        resets_left: 1,
+        clears: ['seven_day_overage_included'],
+      },
+      {
+        id: 'launch-2610-fable-12mo',
+        resets_total: 1,
+        resets_left: 1,
+        clears: ['seven_day_overage_included'],
+      },
+    ],
+  });
+
+  test('counts weekly and Fable resets apart', () => {
+    expect(live).not.toBeNull();
+    expect(resetsLeft(live, 'weekly')).toBe(0);
+    expect(resetsLeft(live, 'fable')).toBe(3);
+  });
+
+  test('has no count before the first read', () => {
+    expect(resetsLeft(null, 'fable')).toBeNull();
+  });
 });

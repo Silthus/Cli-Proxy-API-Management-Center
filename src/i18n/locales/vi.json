@@ -2368,6 +2368,7 @@
     "remaining": "Còn lại {{percent}}%"
   },
   "claude_reset": {
+    "split": "Hằng tuần {{weekly}} · Fable {{fable}}",
     "expiry_title": "Hết hạn đặt lại thủ công ({{timezone}})",
     "grant_number": "Gói {{index}}",
     "expiry_unknown": "Chưa rõ thời gian hết hạn",

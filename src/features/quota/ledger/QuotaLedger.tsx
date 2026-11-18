@@ -11,6 +11,8 @@ import { formatInstantShort, formatRelativeInstant } from '@/utils/quota';
 import { getQuotaCacheKey } from '@/utils/quota/identity';
 import type { QuotaFileEntry } from '../logic';
 import { QUOTA_ADAPTERS, type QuotaCardState } from '../providers';
+import { useClaudeResetGrants } from '../providers/claude/ClaudeResetGrants';
+import { ClaudeResetArmedNotice, ClaudeResetButtons } from '../providers/claude/ClaudeResetActions';
 import type { QuotaProviderType } from '../providers/types';
 import { backInMs, headlineLimitId, type QuotaLimit } from './limits';
 import { credentialLabel, formatDuration, lastSeenMs, resetsRemaining } from './presentation';
@@ -82,7 +84,19 @@ function LedgerRow({ row, ...props }: QuotaLedgerProps & { row: LedgerEntry }) {
   const seenAt = lastSeenMs(file);
   const cacheKey = getQuotaCacheKey(file);
   const canRefresh = props.canUseActions && !file.disabled && quota?.status !== 'loading';
-  const resets = resetsRemaining(quota);
+  const claude = entry.type === 'claude';
+  const resetting = props.resettingName === cacheKey;
+  // Claude banked resets come from Anthropic's grants, read the same way the cards read them.
+  const claudeReset = useClaudeResetGrants(
+    file,
+    claude && quota !== undefined && quota.status !== 'idle',
+    !props.canUseActions || file.disabled || quota?.status === 'loading' || resetting,
+    quota,
+    () => props.onRefresh(entry)
+  );
+  const resets = claude
+    ? claudeReset.counts && t('claude_reset.split', claudeReset.counts)
+    : resetsRemaining(quota);
   const canReset =
     Boolean(adapter.resetQuota) &&
     props.canUseActions &&
@@ -148,19 +162,30 @@ function LedgerRow({ row, ...props }: QuotaLedgerProps & { row: LedgerEntry }) {
           {t('quota_ledger.resets_remaining', { value: resets ?? '--' })}
         </span>
         <div className={styles.actionButtons}>
+          {claude ? (
+            <ClaudeResetButtons
+              actions={claudeReset.actions}
+              busy={claudeReset.busy}
+              onPress={claudeReset.press}
+              buttonClassName={styles.action}
+              armedClassName={styles.actionArmed}
+              spinningClassName={styles.spinning}
+            />
+          ) : (
+            <button
+              type="button"
+              className={styles.action}
+              disabled={!canReset || resetting}
+              onClick={() => props.onReset(entry)}
+            >
+              <IconRefreshCw size={13} />
+              {t('quota_ledger.reset_limits')}
+            </button>
+          )}
           <button
             type="button"
             className={styles.action}
-            disabled={!canReset || props.resettingName === cacheKey}
-            onClick={() => props.onReset(entry)}
-          >
-            <IconRefreshCw size={13} />
-            {t('quota_ledger.reset_limits')}
-          </button>
-          <button
-            type="button"
-            className={styles.action}
-            disabled={!canRefresh}
+            disabled={!canRefresh || claudeReset.busy}
             onClick={() => props.onRefresh(entry)}
           >
             <IconRefreshCw
@@ -170,6 +195,20 @@ function LedgerRow({ row, ...props }: QuotaLedgerProps & { row: LedgerEntry }) {
             {t('quota_ledger.refresh_quota')}
           </button>
         </div>
+        {claude && (
+          <>
+            <ClaudeResetArmedNotice
+              actions={claudeReset.actions}
+              name={credentialLabel(file, props.showEmails)}
+              className={styles.resetNotice}
+            />
+            {claudeReset.message && (
+              <span role="status" className={styles.error}>
+                {t(`claude_reset.${claudeReset.message}`)}
+              </span>
+            )}
+          </>
+        )}
       </div>
     </article>
   );

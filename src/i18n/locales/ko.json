@@ -2362,6 +2362,7 @@
     }
   },
   "claude_reset": {
+    "split": "주간 {{weekly}} · Fable {{fable}}",
     "expiry_title": "수동 초기화 만료 시각 ({{timezone}})",
     "grant_number": "초기화 권한 {{index}}",
     "expiry_unknown": "만료 시각 알 수 없음",

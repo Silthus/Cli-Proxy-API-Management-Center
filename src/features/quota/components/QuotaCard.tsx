@@ -92,7 +92,9 @@ export function QuotaCard(props: QuotaCardProps) {
   const claudePlanItems = showClaudeReset ? (
     <span className={quotaClasses.codexPlanItem}>
       <span className={quotaClasses.codexPlanLabel}>{t('claude_reset.remaining')}</span>
-      <span className={quotaClasses.codexPlanValue}>{claudeReset.count ?? '--'}</span>
+      <span className={quotaClasses.codexPlanValue}>
+        {claudeReset.counts ? t('claude_reset.split', claudeReset.counts) : '--'}
+      </span>
     </span>
   ) : undefined;
   const claudeAfterPlan = showClaudeReset ? (
