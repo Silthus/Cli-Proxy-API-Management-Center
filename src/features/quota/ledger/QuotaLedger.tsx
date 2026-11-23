@@ -14,6 +14,8 @@ import { QUOTA_ADAPTERS, type QuotaCardState } from '../providers';
 import { useClaudeResetGrants } from '../providers/claude/ClaudeResetGrants';
 import { ClaudeResetArmedNotice, ClaudeResetButtons } from '../providers/claude/ClaudeResetActions';
 import type { QuotaProviderType } from '../providers/types';
+import { SubscriptionLine } from '../components/SubscriptionLine';
+import { resolveSubscriptionDisplay, type SubscriptionOverride } from '../subscription';
 import { backInMs, headlineLimitId, type QuotaLimit } from './limits';
 import { credentialLabel, formatDuration, lastSeenMs, resetsRemaining } from './presentation';
 import styles from './QuotaLedger.module.scss';
@@ -31,6 +33,8 @@ export interface QuotaLedgerProps {
   canUseActions: boolean;
   resettingName: string | null;
   resolvedTheme: ResolvedTheme;
+  subscriptionOverrides?: Record<string, SubscriptionOverride>;
+  onSaveSubscriptionOverride?: (entry: QuotaFileEntry, override: SubscriptionOverride | null) => void;
   onRefresh: (entry: QuotaFileEntry) => void;
   onReset: (entry: QuotaFileEntry) => void;
 }
@@ -102,6 +106,13 @@ function LedgerRow({ row, ...props }: QuotaLedgerProps & { row: LedgerEntry }) {
     props.canUseActions &&
     quota?.status === 'success' &&
     Boolean((adapter.canResetQuota as ((q: unknown) => boolean) | undefined)?.(quota));
+  const subscriptionOverride = props.subscriptionOverrides?.[cacheKey];
+  const resolvedSubscription = resolveSubscriptionDisplay(
+    entry,
+    quota,
+    subscriptionOverride,
+    props.nowMs
+  );
 
   return (
     <article className={`${styles.row} ${file.disabled ? styles.rowDisabled : ''}`}>
@@ -130,6 +141,15 @@ function LedgerRow({ row, ...props }: QuotaLedgerProps & { row: LedgerEntry }) {
               }),
             })}
           </span>
+        )}
+        {props.onSaveSubscriptionOverride && (
+          <SubscriptionLine
+            resolved={resolvedSubscription}
+            override={subscriptionOverride}
+            nowMs={props.nowMs}
+            variant="ledger"
+            onSaveOverride={(next) => props.onSaveSubscriptionOverride?.(entry, next)}
+          />
         )}
       </div>
 

@@ -172,7 +172,18 @@ describe('Codex live subscription renewal', () => {
         return result(200, { available_count: 0, credits: [] });
       }
       if (payload.url.startsWith(CODEX_SUBSCRIPTION_URL)) {
-        return result(200, { active_until: '2026-10-03T13:27:01Z' });
+        return result(200, {
+          active_until: '2026-10-03T13:27:01Z',
+          will_renew: true,
+          billing_period: 'monthly',
+          entitlement: {
+            renews_at: '2026-10-03T13:27:01Z',
+            expires_at: '2026-10-03T19:27:01Z',
+            cancels_at: null,
+            billing_period: 'monthly',
+            is_delinquent: false,
+          },
+        });
       }
       throw new Error(`Unexpected URL: ${payload.url}`);
     };
@@ -189,6 +200,14 @@ describe('Codex live subscription renewal', () => {
     );
 
     expect(quota.subscriptionActiveUntil).toBe('2026-10-03T13:27:01Z');
+    expect(quota.subscription).toEqual({
+      renewsAt: '2026-10-03T13:27:01Z',
+      expiresAt: '2026-10-03T19:27:01Z',
+      cancelsAt: null,
+      willRenew: true,
+      billingPeriod: 'monthly',
+      isDelinquent: false,
+    });
     const subscriptionRequest = requests.find((request) =>
       request.url.startsWith(CODEX_SUBSCRIPTION_URL)
     );

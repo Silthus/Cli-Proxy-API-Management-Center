@@ -2083,7 +2083,7 @@
       "activeCount": "{{active}}/{{total}} active"
     },
     "providerNames": {
-       "aiCodeMirror": "AIcodemirror",
+      "aiCodeMirror": "AIcodemirror",
       "meta": "Muse (Meta)",
       "gemini": "Gemini",
       "interactions": "Interactions API",
@@ -2146,8 +2146,8 @@
       "urlMode": "{{provider}} URL",
       "urlHint": "All URLs use the same API conventions. Saving writes only the endpoint for the current grouped protocol.",
       "urlOptions": {
-         "aiCodeMirrorGlobal": "Global high-protection route",
-         "aiCodeMirrorDomestic": "Mainland China optimized route",
+        "aiCodeMirrorGlobal": "Global high-protection route",
+        "aiCodeMirrorDomestic": "Mainland China optimized route",
         "standard": "Standard URL",
         "direct": "Direct URL",
         "domestic": "China mainland route",
@@ -2156,8 +2156,8 @@
         "global": "Global"
       },
       "urlOptionDescriptions": {
-         "aiCodeMirrorGlobal": "A high-protection route for global access.",
-         "aiCodeMirrorDomestic": "A route optimized for mainland China networks.",
+        "aiCodeMirrorGlobal": "A high-protection route for global access.",
+        "aiCodeMirrorDomestic": "A route optimized for mainland China networks.",
         "domestic": "For users and workloads in mainland China; usually lower latency in mainland networks.",
         "overseas": "For overseas deployments, cross-border access, or workloads that need overseas models.",
         "mainlandChinaRecommended": "Recommended for users and workloads on mainland China networks.",
@@ -2512,5 +2512,32 @@
     "refresh_quota": "Refresh quota",
     "resets_remaining": "Resets remaining: {{value}}",
     "forecast_from_pace": "Until the ledger has an hour of history, the forecast uses each window's pace so far."
+  },
+  "quota_subscription": {
+    "renews_on": "Renews {{date}}",
+    "renews_estimated": "Renews ~{{date}} (est.)",
+    "cancels_on": "Cancels {{date}}",
+    "auto_renew": "Auto-renew",
+    "auto_renew_off": "No auto-renew",
+    "period_monthly": "Monthly",
+    "period_yearly": "Yearly",
+    "payment_issue": "Payment issue",
+    "billing_link": "Billing",
+    "invoice_link": "Invoice",
+    "copy_email": "Copy email",
+    "copied_email": "Copied",
+    "edit": "Edit",
+    "set_renewal": "Set renewal",
+    "field_renewal_date": "Renewal date",
+    "field_auto_renew": "Auto-renewal",
+    "field_billing_period": "Billing cycle",
+    "field_billing_url": "Billing or receipt URL",
+    "option_detected": "Detected",
+    "option_auto_renew": "Auto-renews",
+    "option_cancels": "Cancels / no auto-renew",
+    "save": "Save",
+    "cancel": "Cancel",
+    "reset": "Reset",
+    "invalid_url": "Enter a valid https:// URL"
   }
 }

@@ -200,6 +200,45 @@ describe('CodexQuotaBody', () => {
     expect(markup).toContain('08-02 18:00');
     expect(markup).not.toContain('quotaResetRelative');
   });
+  test('shows auto-renew and cancellation labels on Codex subscription expiry', () => {
+    const renewing = renderToStaticMarkup(
+      createElement(CodexQuotaBody, {
+        quota: {
+          ...quota,
+          subscriptionActiveUntil: new Date(now + 10 * DAY_MS).toISOString(),
+          subscription: {
+            renewsAt: new Date(now + 10 * DAY_MS).toISOString(),
+            expiresAt: new Date(now + 10 * DAY_MS).toISOString(),
+            cancelsAt: null,
+            willRenew: true,
+            billingPeriod: 'monthly',
+            isDelinquent: false,
+          },
+        },
+        classes,
+      })
+    );
+    expect(renewing).toContain('Auto-renew');
+
+    const cancelling = renderToStaticMarkup(
+      createElement(CodexQuotaBody, {
+        quota: {
+          ...quota,
+          subscriptionActiveUntil: new Date(now + 10 * DAY_MS).toISOString(),
+          subscription: {
+            renewsAt: new Date(now + 10 * DAY_MS).toISOString(),
+            expiresAt: new Date(now + 10 * DAY_MS).toISOString(),
+            cancelsAt: new Date(now + 10 * DAY_MS).toISOString(),
+            willRenew: false,
+            billingPeriod: 'monthly',
+            isDelinquent: false,
+          },
+        },
+        classes,
+      })
+    );
+    expect(cancelling).toContain('No auto-renew');
+  });
 });
 
 describe('KimiQuotaBody', () => {

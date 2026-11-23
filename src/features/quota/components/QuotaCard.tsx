@@ -6,6 +6,7 @@
 import { useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconRefreshCw } from '@/components/ui/icons';
+import { useNow } from '@/hooks/useNow';
 import type { ClaudeQuotaState, ResolvedTheme } from '@/types';
 import { resolveQuotaErrorMessage } from '@/utils/quota';
 import { getQuotaDisplayName } from '@/utils/quota/identity';
@@ -22,6 +23,8 @@ import { useClaudeResetGrants } from '../providers/claude/ClaudeResetGrants';
 import { ClaudeResetGrantDetails } from '../providers/claude/ClaudeResetGrantDetails';
 import { ClaudeResetArmedNotice, ClaudeResetButtons } from '../providers/claude/ClaudeResetActions';
 import { hasClaudeUsageData } from '../providers/claude/data';
+import { resolveSubscriptionDisplay, type SubscriptionOverride } from '../subscription';
+import { SubscriptionLine } from './SubscriptionLine';
 import bodyStyles from './QuotaBody.module.scss';
 import styles from './QuotaCard.module.scss';
 
@@ -36,6 +39,9 @@ export type QuotaCardProps = {
   resetting: boolean;
   /** Initial cascade delay; null disables entrance motion for later mounts. */
   entranceDelayMs?: number | null;
+  nowMs?: number;
+  subscriptionOverride?: SubscriptionOverride;
+  onSaveSubscriptionOverride?: (override: SubscriptionOverride | null) => void;
   onRefresh: () => void;
   onReset: () => void;
 };
@@ -48,9 +54,14 @@ export function QuotaCard(props: QuotaCardProps) {
     canRefresh,
     resetting,
     entranceDelayMs,
+    nowMs,
+    subscriptionOverride,
+    onSaveSubscriptionOverride,
     onRefresh,
     onReset,
   } = props;
+  const fallbackNowMs = useNow(nowMs === undefined);
+  const currentNowMs = nowMs ?? fallbackNowMs;
   const { t } = useTranslation();
   const adapter = QUOTA_ADAPTERS[entry.type];
   const file = entry.file;
@@ -117,6 +128,12 @@ export function QuotaCard(props: QuotaCardProps) {
     Boolean(adapter.resetQuota) &&
     quota !== undefined &&
     Boolean(adapter.canResetQuota?.(quota));
+  const resolvedSubscription = resolveSubscriptionDisplay(
+    entry,
+    quota,
+    subscriptionOverride,
+    currentNowMs
+  );
 
   return (
     <article
@@ -193,6 +210,16 @@ export function QuotaCard(props: QuotaCardProps) {
           />
         )}
       </div>
+
+      {onSaveSubscriptionOverride && (
+        <SubscriptionLine
+          resolved={resolvedSubscription}
+          override={subscriptionOverride}
+          nowMs={currentNowMs}
+          variant="card"
+          onSaveOverride={onSaveSubscriptionOverride}
+        />
+      )}
 
       {status !== 'idle' && (
         <footer className={styles.actionRow}>

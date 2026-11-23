@@ -1955,7 +1955,7 @@
       "activeCount": "{{active}}/{{total}} đang hoạt động"
     },
     "providerNames": {
-       "aiCodeMirror": "AIcodemirror",
+      "aiCodeMirror": "AIcodemirror",
       "gemini": "Gemini",
       "interactions": "Interactions API",
       "codex": "Codex",
@@ -2021,8 +2021,8 @@
       "urlMode": "URL {{provider}}",
       "urlHint": "Mọi URL dùng cùng quy ước API. Lưu chỉ ghi endpoint của giao thức được nhóm hiện tại.",
       "urlOptions": {
-         "aiCodeMirrorGlobal": "Tuyến toàn cầu được bảo vệ cao",
-         "aiCodeMirrorDomestic": "Tuyến tối ưu cho Trung Quốc đại lục",
+        "aiCodeMirrorGlobal": "Tuyến toàn cầu được bảo vệ cao",
+        "aiCodeMirrorDomestic": "Tuyến tối ưu cho Trung Quốc đại lục",
         "standard": "URL chuẩn",
         "direct": "URL trực tiếp",
         "domestic": "Tuyến Trung Quốc đại lục",
@@ -2031,8 +2031,8 @@
         "global": "Toàn cầu"
       },
       "urlOptionDescriptions": {
-         "aiCodeMirrorGlobal": "Tuyến có mức bảo vệ cao dành cho truy cập toàn cầu.",
-         "aiCodeMirrorDomestic": "Tuyến được tối ưu cho mạng tại Trung Quốc đại lục.",
+        "aiCodeMirrorGlobal": "Tuyến có mức bảo vệ cao dành cho truy cập toàn cầu.",
+        "aiCodeMirrorDomestic": "Tuyến được tối ưu cho mạng tại Trung Quốc đại lục.",
         "domestic": "Dành cho người dùng và khối lượng công việc tại Trung Quốc đại lục; thường có độ trễ thấp hơn trên mạng đại lục.",
         "overseas": "Dành cho triển khai nước ngoài, truy cập xuyên biên giới hoặc khối lượng công việc cần model nước ngoài.",
         "mainlandChinaRecommended": "Khuyến nghị cho người dùng và khối lượng công việc trên mạng Trung Quốc đại lục.",
@@ -2518,5 +2518,32 @@
     "refresh_quota": "Làm mới hạn mức",
     "resets_remaining": "Lượt đặt lại còn lại: {{value}}",
     "forecast_from_pace": "Khi sổ chưa có một giờ lịch sử, dự báo dùng tốc độ tiêu hao của từng cửa sổ từ đầu đến nay."
+  },
+  "quota_subscription": {
+    "renews_on": "Gia hạn {{date}}",
+    "renews_estimated": "Gia hạn ~{{date}} (ước tính)",
+    "cancels_on": "Hủy vào {{date}}",
+    "auto_renew": "Tự động gia hạn",
+    "auto_renew_off": "Không tự động gia hạn",
+    "period_monthly": "Hàng tháng",
+    "period_yearly": "Hàng năm",
+    "payment_issue": "Lỗi thanh toán",
+    "billing_link": "Thanh toán",
+    "invoice_link": "Hóa đơn",
+    "copy_email": "Sao chép email",
+    "copied_email": "Đã sao chép",
+    "edit": "Sửa",
+    "set_renewal": "Đặt gia hạn",
+    "field_renewal_date": "Ngày gia hạn",
+    "field_auto_renew": "Tự động gia hạn",
+    "field_billing_period": "Chu kỳ thanh toán",
+    "field_billing_url": "URL thanh toán hoặc biên lai",
+    "option_detected": "Tự động phát hiện",
+    "option_auto_renew": "Tự động gia hạn",
+    "option_cancels": "Hủy / không tự động gia hạn",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "reset": "Đặt lại",
+    "invalid_url": "Nhập URL https:// hợp lệ"
   }
 }

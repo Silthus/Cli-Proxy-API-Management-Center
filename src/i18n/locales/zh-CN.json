@@ -2081,7 +2081,7 @@
       "activeCount": "{{active}}/{{total}} 活跃"
     },
     "providerNames": {
-       "aiCodeMirror": "AIcodemirror",
+      "aiCodeMirror": "AIcodemirror",
       "meta": "Muse (Meta)",
       "gemini": "Gemini",
       "interactions": "Interactions API",
@@ -2144,8 +2144,8 @@
       "urlMode": "{{provider}} URL",
       "urlHint": "不同 URL 的使用规范一致,保存时只会写入当前分组协议对应地址。",
       "urlOptions": {
-         "aiCodeMirrorGlobal": "全球高保线路",
-         "aiCodeMirrorDomestic": "国内优化线路",
+        "aiCodeMirrorGlobal": "全球高保线路",
+        "aiCodeMirrorDomestic": "国内优化线路",
         "standard": "普通 URL",
         "direct": "专线直连 URL",
         "domestic": "国内线路",
@@ -2154,8 +2154,8 @@
         "global": "全球"
       },
       "urlOptionDescriptions": {
-         "aiCodeMirrorGlobal": "适用于全球访问的高防护线路。",
-         "aiCodeMirrorDomestic": "针对中国大陆网络优化的线路。",
+        "aiCodeMirrorGlobal": "适用于全球访问的高防护线路。",
+        "aiCodeMirrorDomestic": "针对中国大陆网络优化的线路。",
         "domestic": "面向中国大陆用户和部署在中国大陆网络环境中的业务，通常可获得更低延迟。",
         "overseas": "面向海外部署、跨境访问或需要访问境外模型的业务。",
         "mainlandChinaRecommended": "推荐中国大陆用户和部署在中国大陆网络环境中的业务使用。",
@@ -2510,5 +2510,32 @@
     "refresh_quota": "刷新额度",
     "resets_remaining": "剩余重置次数：{{value}}",
     "forecast_from_pace": "在账本积累一小时历史之前，预测使用各窗口迄今的消耗速度。"
+  },
+  "quota_subscription": {
+    "renews_on": "{{date}} 续费",
+    "renews_estimated": "预计 {{date}} 续费",
+    "cancels_on": "{{date}} 到期取消",
+    "auto_renew": "自动续费",
+    "auto_renew_off": "不自动续费",
+    "period_monthly": "按月",
+    "period_yearly": "按年",
+    "payment_issue": "付款异常",
+    "billing_link": "账单",
+    "invoice_link": "发票",
+    "copy_email": "复制邮箱",
+    "copied_email": "已复制",
+    "edit": "编辑",
+    "set_renewal": "设置续费",
+    "field_renewal_date": "续费日期",
+    "field_auto_renew": "自动续费",
+    "field_billing_period": "计费周期",
+    "field_billing_url": "账单或收据链接",
+    "option_detected": "自动检测",
+    "option_auto_renew": "自动续费",
+    "option_cancels": "到期取消 / 不自动续费",
+    "save": "保存",
+    "cancel": "取消",
+    "reset": "重置",
+    "invalid_url": "请输入有效的 https:// 链接"
   }
 }

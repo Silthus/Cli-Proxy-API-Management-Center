@@ -191,7 +191,16 @@ export interface ClaudeProfileResponse {
     has_extra_usage_enabled?: boolean;
     subscription_status?: string;
     subscription_created_at?: string;
+    payment_auth_hosted_invoice_url?: string | null;
   };
+}
+
+export interface ClaudeSubscriptionInfo {
+  status: string | null;
+  billingType: string | null;
+  createdAt: string | null;
+  organizationType: string | null;
+  paymentAuthHostedInvoiceUrl: string | null;
 }
 
 export interface ClaudeQuotaWindow {
@@ -218,6 +227,7 @@ export interface ClaudeQuotaState {
   observedAt?: string | null;
   stale?: boolean;
   planType?: string | null;
+  subscription?: ClaudeSubscriptionInfo | null;
   error?: string;
   errorStatus?: number;
 }
@@ -293,11 +303,21 @@ export interface CodexQuotaWindow {
   periodHours?: number | null;
 }
 
+export interface CodexSubscriptionInfo {
+  renewsAt: string | number | null;
+  expiresAt: string | number | null;
+  cancelsAt: string | number | null;
+  willRenew: boolean | null;
+  billingPeriod: string | null;
+  isDelinquent: boolean;
+}
+
 export interface CodexQuotaState {
   status: 'idle' | 'loading' | 'success' | 'error';
   windows: CodexQuotaWindow[];
   planType?: string | null;
   subscriptionActiveUntil?: string | number | null;
+  subscription?: CodexSubscriptionInfo | null;
   creditBalance?: string | null;
   creditsUnlimited?: boolean;
   rateLimitResetCreditsAvailableCount?: number | null;

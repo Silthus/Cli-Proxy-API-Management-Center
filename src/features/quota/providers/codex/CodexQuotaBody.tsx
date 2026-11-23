@@ -91,10 +91,19 @@ export function CodexQuotaBody({ quota, classes }: QuotaBodyProps<CodexQuotaStat
           )}
           {expiryDisplay && (
             <span className={classes.codexPlanItem}>
-              <span className={classes.codexPlanLabel}>{t('codex_quota.expires_label')}</span>
+              <span className={classes.codexPlanLabel}>
+                {quota.subscription?.willRenew === false
+                  ? t('quota_subscription.auto_renew_off')
+                  : t('codex_quota.expires_label')}
+              </span>
               <span className={classes.codexPlanValue}>{expiryDisplay.absolute}</span>
               {expiryDisplay.relative && (
                 <span className={classes.quotaResetRelative}>{expiryDisplay.relative}</span>
+              )}
+              {quota.subscription?.willRenew === true && (
+                <span className={classes.quotaResetRelative}>
+                  {t('quota_subscription.auto_renew')}
+                </span>
               )}
             </span>
           )}

@@ -2109,7 +2109,7 @@
       "activeCount": "{{active}}/{{total}} 活躍"
     },
     "providerNames": {
-       "aiCodeMirror": "AIcodemirror",
+      "aiCodeMirror": "AIcodemirror",
       "meta": "Muse (Meta)",
       "gemini": "Gemini",
       "interactions": "Interactions API",
@@ -2172,8 +2172,8 @@
       "urlMode": "{{provider}} URL",
       "urlHint": "不同 URL 的使用規範一致,儲存時只會寫入目前分組協議對應位址。",
       "urlOptions": {
-         "aiCodeMirrorGlobal": "全球高保線路",
-         "aiCodeMirrorDomestic": "國內優化線路",
+        "aiCodeMirrorGlobal": "全球高保線路",
+        "aiCodeMirrorDomestic": "國內優化線路",
         "standard": "普通 URL",
         "direct": "專線直連 URL",
         "domestic": "中國大陸線路",
@@ -2182,8 +2182,8 @@
         "global": "全球"
       },
       "urlOptionDescriptions": {
-         "aiCodeMirrorGlobal": "適用於全球存取的高防護線路。",
-         "aiCodeMirrorDomestic": "針對中國大陸網路最佳化的線路。",
+        "aiCodeMirrorGlobal": "適用於全球存取的高防護線路。",
+        "aiCodeMirrorDomestic": "針對中國大陸網路最佳化的線路。",
         "domestic": "面向中國大陸使用者和部署在中國大陸網路環境中的業務，通常可獲得更低延遲。",
         "overseas": "面向海外部署、跨境存取或需要存取境外模型的業務。",
         "mainlandChinaRecommended": "推薦中國大陸使用者和部署在中國大陸網路環境中的業務使用。",
@@ -2538,5 +2538,32 @@
     "refresh_quota": "重新整理額度",
     "resets_remaining": "剩餘重置次數：{{value}}",
     "forecast_from_pace": "在帳本累積一小時歷史之前，預測使用各視窗迄今的消耗速度。"
+  },
+  "quota_subscription": {
+    "renews_on": "{{date}} 續訂",
+    "renews_estimated": "預計 {{date}} 續訂",
+    "cancels_on": "{{date}} 到期取消",
+    "auto_renew": "自動續訂",
+    "auto_renew_off": "不自動續訂",
+    "period_monthly": "月繳",
+    "period_yearly": "年繳",
+    "payment_issue": "付款異常",
+    "billing_link": "帳單",
+    "invoice_link": "發票",
+    "copy_email": "複製信箱",
+    "copied_email": "已複製",
+    "edit": "編輯",
+    "set_renewal": "設定續訂",
+    "field_renewal_date": "續訂日期",
+    "field_auto_renew": "自動續訂",
+    "field_billing_period": "計費週期",
+    "field_billing_url": "帳單或收據連結",
+    "option_detected": "自動偵測",
+    "option_auto_renew": "自動續訂",
+    "option_cancels": "到期取消 / 不自動續訂",
+    "save": "儲存",
+    "cancel": "取消",
+    "reset": "重設",
+    "invalid_url": "請輸入有效的 https:// 連結"
   }
 }

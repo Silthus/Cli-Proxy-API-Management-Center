@@ -10,12 +10,14 @@ import type {
   CodexRateLimitInfo,
   CodexRateLimitResetCredit,
   CodexQuotaState,
+  CodexSubscriptionInfo,
   CodexUsageWindow,
   CodexQuotaWindow,
   CodexUsagePayload,
 } from '@/types';
 import { apiCallApi, authFilesApi, getApiCallErrorMessage } from '@/services/api';
 import { guardConfigConnection } from '@/services/api/configValue';
+import { parseCodexSubscriptionPayload } from '../../subscription';
 import { isRecord } from '@/utils/helpers';
 import {
   CODEX_RATE_LIMIT_RESET_CREDITS_URL,
@@ -54,6 +56,7 @@ type CodexResetCreditsData = {
 export type CodexQuotaData = {
   planType: string | null;
   subscriptionActiveUntil: string | number | null;
+  subscription: CodexSubscriptionInfo | null;
   creditBalance: string | null;
   creditsUnlimited: boolean;
   rateLimitResetCreditsAvailableCount: number | null;
@@ -315,31 +318,11 @@ const buildCodexRequestHeader = (file: AuthFileItem): Record<string, string> => 
   return requestHeader;
 };
 
-const parseCodexSubscriptionActiveUntil = (payload: unknown): string | number | null => {
-  if (typeof payload === 'string') {
-    const trimmed = payload.trim();
-    if (!trimmed) return null;
-    try {
-      return parseCodexSubscriptionActiveUntil(JSON.parse(trimmed));
-    } catch {
-      return null;
-    }
-  }
-
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
-  const subscription = payload as Record<string, unknown>;
-  const value = subscription.active_until ?? subscription.activeUntil;
-  const numberValue = normalizeNumberValue(value);
-  if (numberValue !== null && numberValue !== 0) return numberValue;
-  const stringValue = normalizeStringValue(value);
-  return stringValue && stringValue !== '0' ? stringValue : null;
-};
-
-const fetchCodexSubscriptionActiveUntil = async (
+const fetchCodexSubscription = async (
   authIndex: string,
   accountId: string | null,
   requestHeader: Record<string, string>
-): Promise<string | number | null> => {
+): Promise<CodexSubscriptionInfo | null> => {
   if (!accountId) return null;
 
   try {
@@ -353,7 +336,7 @@ const fetchCodexSubscriptionActiveUntil = async (
       { timeout: CODEX_OPTIONAL_REQUEST_TIMEOUT_MS }
     );
     if (result.statusCode < 200 || result.statusCode >= 300) return null;
-    return parseCodexSubscriptionActiveUntil(result.body ?? result.bodyText);
+    return parseCodexSubscriptionPayload(result.body ?? result.bodyText);
   } catch {
     return null;
   }
@@ -427,14 +410,14 @@ const fetchCodexQuota = async (file: AuthFileItem, t: TFunction): Promise<CodexQ
   const accountId = resolveCodexChatgptAccountId(file);
   const requestHeader = buildCodexRequestHeader(file);
 
-  const [result, liveSubscriptionActiveUntil] = await Promise.all([
+  const [result, liveSubscription] = await Promise.all([
     apiCallApi.request({
       authIndex,
       method: 'GET',
       url: CODEX_USAGE_URL,
       header: requestHeader,
     }),
-    fetchCodexSubscriptionActiveUntil(authIndex, accountId, requestHeader),
+    fetchCodexSubscription(authIndex, accountId, requestHeader),
   ]);
 
   if (result.statusCode < 200 || result.statusCode >= 300) {
@@ -462,11 +445,13 @@ const fetchCodexQuota = async (file: AuthFileItem, t: TFunction): Promise<CodexQ
     resetCreditsData.applicableAvailableCount ??
     rateLimitResetCreditsAvailableCount;
   const planType = planTypeFromUsage ?? planTypeFromFile;
-  const subscriptionActiveUntil = liveSubscriptionActiveUntil ?? subscriptionActiveUntilFromFile;
+  const subscriptionActiveUntil =
+    liveSubscription?.renewsAt ?? liveSubscription?.expiresAt ?? subscriptionActiveUntilFromFile;
   const windows = buildCodexQuotaWindows(payload, t);
   return {
     planType,
     subscriptionActiveUntil,
+    subscription: liveSubscription,
     creditBalance: accountCredits.balance,
     creditsUnlimited: accountCredits.unlimited,
     rateLimitResetCreditsAvailableCount,
@@ -559,6 +544,7 @@ export const CODEX_CONFIG: QuotaProviderData<CodexQuotaState, CodexQuotaData> = 
     windows: data.windows,
     planType: data.planType,
     subscriptionActiveUntil: data.subscriptionActiveUntil,
+    subscription: data.subscription,
     creditBalance: data.creditBalance,
     creditsUnlimited: data.creditsUnlimited,
     rateLimitResetCreditsAvailableCount: data.rateLimitResetCreditsAvailableCount,

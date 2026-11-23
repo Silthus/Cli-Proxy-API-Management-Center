@@ -62,6 +62,11 @@ import { ProviderSummaryCards } from './ledger/ProviderSummaryCards';
 import { QuotaLedger } from './ledger/QuotaLedger';
 import { QuotaPulse } from './ledger/QuotaPulse';
 import { useQuotaLedger } from './ledger/useQuotaLedger';
+import {
+  readSubscriptionOverrides,
+  writeSubscriptionOverride,
+  type SubscriptionOverride,
+} from './subscription';
 import styles from './QuotaPage.module.scss';
 
 const TAB_IDS: string[] = ['all', ...QUOTA_TAB_ORDER];
@@ -94,6 +99,9 @@ export function QuotaPage() {
     readLedgerPreference('view', 'ledger', ['ledger', 'cards'])
   );
   const [showEmails, setShowEmails] = useState(() => readLedgerPreference('showEmails', false));
+  const [subscriptionOverrides, setSubscriptionOverrides] = useState<
+    Record<string, SubscriptionOverride>
+  >(() => readSubscriptionOverrides());
   const searchInputRef = useRef<HTMLInputElement>(null);
   // 页头 + tabs 的入场级联（标题 → meta → 动作 → tabs，级差 70ms）
   const revealRef = useRevealGroup<HTMLDivElement>();
@@ -240,6 +248,14 @@ export function QuotaPage() {
       return !current;
     });
   }, []);
+
+  const handleSaveSubscriptionOverride = useCallback(
+    (entry: QuotaFileEntry, override: SubscriptionOverride | null) => {
+      const key = getQuotaCacheKey(entry.file);
+      setSubscriptionOverrides(writeSubscriptionOverride(key, override));
+    },
+    []
+  );
 
   const viewOptions = useMemo(
     () => [
@@ -540,6 +556,8 @@ export function QuotaPage() {
               canUseActions={canUseActions}
               resettingName={resettingQuotaName}
               resolvedTheme={resolvedTheme}
+              subscriptionOverrides={subscriptionOverrides}
+              onSaveSubscriptionOverride={handleSaveSubscriptionOverride}
               onRefresh={(entry) => void refreshQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
               onReset={(entry) => resetQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
             />
@@ -555,6 +573,11 @@ export function QuotaPage() {
                 canRefresh={canUseActions && !entry.file.disabled}
                 resetting={resettingQuotaName === getQuotaCacheKey(entry.file)}
                 entranceDelayMs={cardEntranceDelay(index)}
+                nowMs={now}
+                subscriptionOverride={subscriptionOverrides[getQuotaCacheKey(entry.file)]}
+                onSaveSubscriptionOverride={(override) =>
+                  handleSaveSubscriptionOverride(entry, override)
+                }
                 onRefresh={() => void refreshQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
                 onReset={() => resetQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
               />

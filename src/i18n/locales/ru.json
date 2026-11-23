@@ -2077,7 +2077,7 @@
       "activeCount": "{{active}}/{{total}} активных"
     },
     "providerNames": {
-       "aiCodeMirror": "AIcodemirror",
+      "aiCodeMirror": "AIcodemirror",
       "meta": "Muse (Meta)",
       "gemini": "Gemini",
       "interactions": "Interactions API",
@@ -2140,8 +2140,8 @@
       "urlMode": "{{provider}} URL",
       "urlHint": "Все URL используют одинаковые правила API. При сохранении записывается только endpoint текущего группового протокола.",
       "urlOptions": {
-         "aiCodeMirrorGlobal": "Глобальный маршрут с усиленной защитой",
-         "aiCodeMirrorDomestic": "Оптимизированный маршрут для материкового Китая",
+        "aiCodeMirrorGlobal": "Глобальный маршрут с усиленной защитой",
+        "aiCodeMirrorDomestic": "Оптимизированный маршрут для материкового Китая",
         "standard": "Обычный URL",
         "direct": "Прямой URL",
         "domestic": "Маршрут для материкового Китая",
@@ -2150,8 +2150,8 @@
         "global": "Глобальный"
       },
       "urlOptionDescriptions": {
-         "aiCodeMirrorGlobal": "Маршрут с усиленной защитой для доступа по всему миру.",
-         "aiCodeMirrorDomestic": "Маршрут, оптимизированный для сетей материкового Китая.",
+        "aiCodeMirrorGlobal": "Маршрут с усиленной защитой для доступа по всему миру.",
+        "aiCodeMirrorDomestic": "Маршрут, оптимизированный для сетей материкового Китая.",
         "domestic": "Для пользователей и нагрузок в материковом Китае; обычно дает меньшую задержку в сетях материкового Китая.",
         "overseas": "Для зарубежных развертываний, трансграничного доступа или задач, которым нужны зарубежные модели.",
         "mainlandChinaRecommended": "Рекомендуется для пользователей и нагрузок в сетях материкового Китая.",
@@ -2514,5 +2514,32 @@
     "refresh_quota": "Обновить квоту",
     "resets_remaining": "Осталось сбросов: {{value}}",
     "forecast_from_pace": "Пока в журнале нет часа истории, прогноз использует темп каждого окна с его начала."
+  },
+  "quota_subscription": {
+    "renews_on": "Продление {{date}}",
+    "renews_estimated": "Продление ~{{date}} (оценка)",
+    "cancels_on": "Отмена {{date}}",
+    "auto_renew": "Автопродление",
+    "auto_renew_off": "Без автопродления",
+    "period_monthly": "Ежемесячно",
+    "period_yearly": "Ежегодно",
+    "payment_issue": "Проблема с оплатой",
+    "billing_link": "Оплата",
+    "invoice_link": "Счёт",
+    "copy_email": "Копировать email",
+    "copied_email": "Скопировано",
+    "edit": "Изменить",
+    "set_renewal": "Указать продление",
+    "field_renewal_date": "Дата продления",
+    "field_auto_renew": "Автопродление",
+    "field_billing_period": "Период оплаты",
+    "field_billing_url": "Ссылка на оплату или чек",
+    "option_detected": "Определено автоматически",
+    "option_auto_renew": "Автопродление",
+    "option_cancels": "Отменяется / без автопродления",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "reset": "Сбросить",
+    "invalid_url": "Введите корректный https:// URL"
   }
 }

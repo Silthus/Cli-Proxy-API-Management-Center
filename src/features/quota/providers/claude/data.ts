@@ -11,11 +11,13 @@ import type {
   ClaudeProfileResponse,
   ClaudeQuotaState,
   ClaudeQuotaWindow,
+  ClaudeSubscriptionInfo,
   ClaudeUsageWindow,
   ClaudeUsagePayload,
 } from '@/types';
 import { apiCallApi, getApiCallErrorMessage } from '@/services/api';
 import { normalizeClaudeUsageSnapshot } from '@/services/api/claudeUsage';
+import { parseClaudeSubscriptionInfo } from '../../subscription';
 import {
   CLAUDE_PROFILE_URL,
   CLAUDE_USAGE_URL,
@@ -38,6 +40,7 @@ export type ClaudeQuotaData = {
   windows: ClaudeQuotaWindow[];
   extraUsage?: ClaudeExtraUsage | null;
   planType?: string | null;
+  subscription?: ClaudeSubscriptionInfo | null;
   dollarWindows: ClaudeDollarWindow[];
   observedAt: string;
 };
@@ -253,14 +256,14 @@ const fetchClaudeQuota = async (file: AuthFileItem, t: TFunction): Promise<Claud
       window.id !== 'cloud-session-credits' ||
       !dollarWindows.some((balance) => balance.key === 'iguana_necktie')
   );
-  const planType =
+  const profilePayload =
     profileResult.status === 'fulfilled' &&
     profileResult.value.statusCode >= 200 &&
     profileResult.value.statusCode < 300
-      ? resolveClaudePlanType(
-          parseClaudeProfilePayload(profileResult.value.body ?? profileResult.value.bodyText)
-        )
+      ? parseClaudeProfilePayload(profileResult.value.body ?? profileResult.value.bodyText)
       : null;
+  const planType = resolveClaudePlanType(profilePayload);
+  const subscription = parseClaudeSubscriptionInfo(profilePayload);
 
   return {
     windows,
@@ -268,6 +271,7 @@ const fetchClaudeQuota = async (file: AuthFileItem, t: TFunction): Promise<Claud
     dollarWindows,
     observedAt: new Date().toISOString(),
     planType,
+    subscription,
   };
 };
 
@@ -284,6 +288,7 @@ export const CLAUDE_CONFIG: QuotaProviderData<ClaudeQuotaState, ClaudeQuotaData>
     windows: data.windows,
     extraUsage: data.extraUsage,
     planType: data.planType,
+    subscription: data.subscription,
     dollarWindows: data.dollarWindows,
     observedAt: data.observedAt,
     stale: false,
